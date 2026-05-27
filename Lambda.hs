@@ -30,6 +30,7 @@ vars (App l1 l2) = nub (vars l1 ++ vars l2)  -- pentru concatenarea listelor: ++
 vars (Abs str l) = nub (str : vars l)
 vars (Macro m) = m : [] 
 
+
 -- 1.2. --------------------------------------------------------------------
 -- returneaza toate variabilele libere din expresie
 freeVars :: Lambda -> [String]
@@ -37,6 +38,7 @@ freeVars (Var s) = s : []
 freeVars (App l1 l2) = nub (freeVars l1 ++ freeVars l2)
 freeVars (Abs str l) = freeVars l \\ [str]  -- pentru diferenta de multimi/ liste: \\ 
 freeVars (Macro m) = m : []
+
 
 -- 1.3. --------------------------------------------------------------------
 newVar :: [String] -> String
@@ -46,6 +48,7 @@ newVar xs = head (filter (`notElem` xs) all_letters)
     alphabet_2 ws = [a ++ b | a <- alphabet, b <- ws]  -- !!
     all_letters = concat (iterate alphabet_2 alphabet)  
 
+
 -- 1.4. --------------------------------------------------------------------
 isNormalForm :: Lambda -> Bool
 isNormalForm (Var _) = True
@@ -53,6 +56,7 @@ isNormalForm (App (Abs _ _) _) = False
 isNormalForm (App e1 e2) = isNormalForm e1 && isNormalForm e2
 isNormalForm (Abs _ e) = isNormalForm e
 isNormalForm (Macro _) = True
+
 
 -- 1.5. --------------------------------------------------------------------
 reduce :: String -> Lambda -> Lambda -> Lambda
@@ -78,12 +82,14 @@ reduce x (App e1 e2) exp = App (reduce x e1 exp) (reduce x e2 exp)
 
 -- cazul 4: Macro -- ??
 
+
 -- 1.6. --------------------------------------------------------------------
 normalStep :: Lambda -> Lambda
 normalStep (Var x) = (Var x)
 normalStep (Abs x e) = Abs x (normalStep e) -- pentru ca expresia e se poate reduce in interior!
 normalStep (App (Abs x e1) e2) = reduce x e1 e2
 normalStep (App e1 e2) = App (normalStep e1) e2
+
 
 -- 1.7. --------------------------------------------------------------------
 applicativeStep :: Lambda -> Lambda
@@ -97,6 +103,7 @@ applicativeStep (App (Abs x e1) e2) =
     else App (Abs x e1) (applicativeStep e2)
 
 applicativeStep (App e1 e2) = App (applicativeStep e1) e2
+
 
 -- 1.8. --------------------------------------------------------------------
 simplify :: (Lambda -> Lambda) -> Lambda -> [Lambda]
