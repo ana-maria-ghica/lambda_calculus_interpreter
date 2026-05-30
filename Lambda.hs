@@ -45,7 +45,7 @@ newVar :: [String] -> String
 newVar xs = head (filter (`notElem` xs) all_letters)
   where
     alphabet = map (:[]) ['a'..'z']
-    alphabet_2 ws = [a ++ b | a <- alphabet, b <- ws]  -- !!
+    alphabet_2 words = [a ++ b | a <- alphabet, b <- words]
     all_letters = concat (iterate alphabet_2 alphabet)  
 
 
@@ -67,7 +67,7 @@ reduce x (Var v1) v2
 
 -- cazul 2: Abs ---
 reduce x (Abs y e1) e2 = 
-  if y == x  -- se refera la ex: λx.(λx.(x x)  λy.z) -> unde (x x) apartin de al doilea x, nu de primul => shadowing!
+  if y == x  -- se refera la ex: \x.(\x.(x x)  \y.z) -> unde (x x) apartin de al doilea x, nu de primul => shadowing!
     then Abs x e1
     else if elem y (freeVars e2)
       then Abs a (reduce x e1' e2) -- alpha renaming
@@ -79,8 +79,6 @@ reduce x (Abs y e1) e2 =
 
 -- cazul 3: App ---
 reduce x (App e1 e2) exp = App (reduce x e1 exp) (reduce x e2 exp) 
-
--- cazul 4: Macro -- ??
 
 
 -- 1.6. --------------------------------------------------------------------

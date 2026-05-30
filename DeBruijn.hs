@@ -48,34 +48,31 @@ isNormalForm (DBApp dbj1 dbj2) = isNormalForm dbj1 && isNormalForm dbj2
 isNormalForm (DBAbs str dbj) = isNormalForm dbj
 
 -- 4.4. ---------------------------------------------
-shifting :: DeBruijn -> DeBruijn
-shifting (DBVar x) = DBVar (x+1)
-shifting (DBFree x) = DBFree x
-shifting (DBApp e1 e2) = DBApp (shifting e1) (shifting e2)
-shifting (DBAbs str e) = DBAbs str (shifting e)
+-- functia de shiftare
+shift :: Int -> DeBruijn -> DeBruijn
+shift 0 e = e
+shift n (DBVar x) = shift (n-1) (DBVar (x+1))
+shift n (DBFree x) = DBFree x
+shift n (DBApp e1 e2) = DBApp (shift n e1) (shift n e2)
+shift n (DBAbs str e) = DBAbs str (shift n e)
 
-reduce :: DeBruijn -> DeBruijn -> DeBruijn -- -----------------------------------------------------de reluat neaparat
-reduce body (DBVar 0) = body
-reduce body (DBVar x) = DBVar (x-1)
-reduce body (DBFree x) = DBFree x
-reduce body (DBApp dbj1 dbj2) = DBApp (reduce body dbj1) (reduce body dbj2)
-reduce body (DBAbs str e) = DBAbs str (reduce (shifting body) e)
+-- functia de reducere
+reduce :: DeBruijn -> DeBruijn -> DeBruijn
+reduce param e = reduce' 0 param e
+    where
+        reduce' depth param (DBVar x) =
+            if (x == depth) then shift depth param
+            else if (x > depth) then (DBVar (x-1))
+            else (DBVar x)
 
--- reduce :: DeBruijn -> DeBruijn -> DeBruijn
--- reduce body e = reduceAt 0 body e
---   where
---     reduceAt depth body (DBVar x)
---         | x == depth  = shifting_n depth body
---         | x > depth   = DBVar (x-1)
---         | otherwise   = DBVar x
---     reduceAt depth body (DBFree x) = DBFree x
---     reduceAt depth body (DBApp e1 e2) = DBApp (reduceAt depth body e1) (reduceAt depth body e2)
---     reduceAt depth body (DBAbs str e) = DBAbs str (reduceAt (depth+1) body e)
+        reduce' depth param (DBFree x) = DBFree x
 
---     shifting_n 0 e = e
---     shifting_n n e = shifting_n (n-1) (shifting e)
+        reduce' depth param (DBApp e1 e2) = DBApp (reduce' depth param e1) (reduce' depth param e2)
 
--- 4.5.
+        reduce' depth param (DBAbs x e) = DBAbs x (reduce' (depth+1) param e)
+
+
+-- 4.5. ---------------------------------------------
 normalStep :: DeBruijn -> DeBruijn
 normalStep (DBVar x) = DBVar x
 normalStep (DBFree x) = DBFree x
@@ -83,7 +80,7 @@ normalStep (DBAbs x e) = DBAbs x (normalStep e)
 normalStep (DBApp (DBAbs x e1) e2) = reduce e2 e1 -- aici se aplica reducerea efectiva, in rest sunt apeluri recursive
 normalStep (DBApp e1 e2) = DBApp (normalStep e1) (normalStep e2)
 
--- 4.6.
+-- 4.6. ---------------------------------------------
 applicativeStep :: DeBruijn -> DeBruijn
 applicativeStep (DBVar x) = DBVar x
 applicativeStep (DBFree x) = DBFree x
@@ -94,7 +91,7 @@ applicativeStep (DBApp (DBAbs x e1) e2) =
         else DBApp (DBAbs x e1) (applicativeStep e2)
 applicativeStep (DBApp e1 e2) = DBApp e1 (applicativeStep e2)
 
--- 4.7.
+-- 4.7. ---------------------------------------------
 simplify :: (DeBruijn -> DeBruijn) -> DeBruijn -> [DeBruijn]
 simplify f exp =
     if isNormalForm exp

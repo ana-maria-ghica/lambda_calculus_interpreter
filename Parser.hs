@@ -63,7 +63,7 @@ charParser c = Parser $ \str ->
 -- plusParser - generatorul de parsere care se apeleaza de 1 sau mai multe ori
 plusParser :: Parser a -> Parser [a]
 plusParser mp = 
-    do -- de ce asta e cu "do" si restul fara?? ----------------------------------------------------------------------------------------------------------
+    do
         x <- mp
         xs <- starParser mp
         return (x:xs)
